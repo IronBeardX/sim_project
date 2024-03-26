@@ -7,6 +7,28 @@ import matplotlib.pyplot as plt  # For plotting results
 import random # For random number generation
 import heapq
 
+# Defining peak times:
+def peak_times(time_min:int):
+    # Turn minutes into hours:
+    time_hour = time_min // 60
+
+    # Getting time of the day in hours:
+    time_day = time_hour % 24
+
+    # Returning lambda poisson value for the time of the day:
+    if time_day >= 6 and time_day < 9:
+        return poisson_random_variable(10)
+    elif time_day >= 9 and time_day < 12:
+        return poisson_random_variable(4)
+    elif time_day >= 12 and time_day < 15:
+        return poisson_random_variable(8)
+    elif time_day >= 15 and time_day < 18:
+        return poisson_random_variable(10)
+    elif time_day >= 18 and time_day < 21:
+        return poisson_random_variable(15)
+    else:
+        return poisson_random_variable(5)
+
 # Define class for inventory system simulation
 class InventorySimulation:
     def __init__(self, 
@@ -19,7 +41,7 @@ class InventorySimulation:
                 product_value:int = 10,
                 initial_inventory_level:int= 0,
                 ordering_cost_func:Callable = lambda x: x * 10, 
-                clients_arrival_dist:Callable = lambda: poisson_random_variable(5), 
+                clients_arrival_dist:Callable = lambda x: poisson_random_variable(5), 
                 client_attention_dist:Callable = lambda: random.randint(1, 10),
                 client_demand_dist:Callable = lambda: random.randint(1, 10)
                 ):
@@ -92,7 +114,7 @@ class InventorySimulation:
     #[x] missing demand randomization information
     def generate_client_arrival(self):
         # Generate customer demand according to a specified distribution
-        arrival_time, demand = self.clients_arrival_dist(), self.client_demand_dist()
+        arrival_time, demand = self.clients_arrival_dist(self.time), self.client_demand_dist()
         if self.time + arrival_time > self.sim_duration:
             return None, None
         return self.time + arrival_time, demand
@@ -215,29 +237,42 @@ class InventorySimulation:
     #[ ]
     def plot_results(self):
         # Plot results of the simulation
-        # Plot results of the simulation
-        plt.figure(figsize=(12, 6))
+        plt.figure(figsize=(12, 8))
 
-        plt.subplot(2, 1, 1)
-        plt.plot(range(len(self.st_inventory_level_records)), self.st_inventory_level_records, label='Inventory Level')
+        # Plot inventory levels and holding costs
+        plt.subplot(3, 1, 1)
+        plt.plot(*zip(*self.st_inventory_level_records), label='Inventory Level')
+        plt.plot(*zip(*self.st_holding_payment_records), label='Holding Costs', color='red', marker='o', linestyle = '')
         plt.xlabel('Time')
-        plt.ylabel('Inventory Level')
+        plt.ylabel('Units')
+        plt.title('Inventory Level and Holding Costs Over Time')
         plt.legend()
 
-        plt.subplot(2, 1, 2)
-        plt.plot(range(len(self.st_holding_payment_records)), self.st_holding_payment_records, label='Holding Costs')
+        # Plot lost sales and amount sold
+        plt.subplot(3, 1, 2)
+        plt.plot(*zip(*self.st_lost_sale_records), label='Lost Sales', color='red', marker = 'o', linestyle = '')
+        plt.plot(*zip(*self.st_sell_records), label='Amount Sold', color='green', marker = 'x', linestyle = '')
+        plt.plot(*zip(*self.st_balance_records), label='Balance', color='blue')
         plt.xlabel('Time')
-        plt.ylabel('Holding Costs')
+        plt.ylabel('Units')
+        plt.title('Lost Sales and Amount Sold Over Time')
         plt.legend()
 
         plt.tight_layout()
         plt.show()
 
+
 # Main function
 def main():
     # Initialize simulation
     simulation = InventorySimulation(
+        S = 15,
         initial_inventory_level=15,
+        product_value= 13,
+        clients_arrival_dist= lambda x: poisson_random_variable(peak_times(x)),
+        holding_cost_rate= 1,
+        ordering_cost_func= lambda y: y*2,
+        sim_duration= 2880
     )
 
     simulation.run_simulation()
