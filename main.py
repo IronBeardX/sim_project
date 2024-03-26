@@ -215,7 +215,23 @@ class InventorySimulation:
     #[ ]
     def plot_results(self):
         # Plot results of the simulation
-        pass
+        # Plot results of the simulation
+        plt.figure(figsize=(12, 6))
+
+        plt.subplot(2, 1, 1)
+        plt.plot(range(len(self.st_inventory_level_records)), self.st_inventory_level_records, label='Inventory Level')
+        plt.xlabel('Time')
+        plt.ylabel('Inventory Level')
+        plt.legend()
+
+        plt.subplot(2, 1, 2)
+        plt.plot(range(len(self.st_holding_payment_records)), self.st_holding_payment_records, label='Holding Costs')
+        plt.xlabel('Time')
+        plt.ylabel('Holding Costs')
+        plt.legend()
+
+        plt.tight_layout()
+        plt.show()
 
 # Main function
 def main():
