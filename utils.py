@@ -29,6 +29,7 @@ def visualize_random_variable(random_variable_generator:Callable, ground_truth_g
     """
     # Generate random variables
     random_values = [random_variable_generator() for _ in range(num_samples)]
+    print(random_values)
     
     # Plot histogram for random variable generator
     plt.hist(random_values, bins=20, density=True, alpha=0.6, color='g', label='Generated')

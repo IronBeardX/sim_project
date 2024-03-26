@@ -163,7 +163,6 @@ class InventorySimulation:
             else:
                 raise ValueError('Invalid event type')
 
-
     #[ ] Add statistical information needed in previous methods
     def plot_results(self):
         # Plot results of the simulation
