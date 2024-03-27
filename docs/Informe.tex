@@ -1,0 +1,223 @@
+\documentclass{article}
+
+\title{Inventory Simulation Project Report}
+\author{Leismael Sosa Hernández, Alejandro Yero Valdéz}
+\date{\today}
+% \date{March 25, 2024}
+
+\begin{document}
+
+\maketitle
+
+\section{Introducción}
+
+\subsection{Descripción del proyecto}
+
+Nuestro proyecto consiste en desarrollar una simulación basada en eventos discretos
+para analizar el comportamiento de un sistema de inventario. El sistema de inventario
+analizado presenta las siguientes entidades:
+\begin{enumerate}
+    \item Tienda: Esta entidad representa una tienda que vende productos de un solo tipo.
+    \item Proveedor: Esta entidad le vende productos a la tienda cuando esta lo pide.
+    \item Cliente: Esta entidad representa a los compradores del producto ofrecido por la tienda.
+\end{enumerate}
+
+Las entidades anteriores se relacionan de la siguiente forma.
+La tienda tiene en cada momento de tiempo una cierta cantidad del producto disponible para vender y siempre
+que esta cantidad baje de cierto umbral le ordena unidades adicionales al proveedor. La política de pedido que usa
+el cliente, llamada $(s,S)$, plantea que siempre que la cantidad de unidades del producto en el almacén (inventario), denotada por $x$,
+sea menor que $s$ ($x<s$) se debe pedir al proveedor la cantidad $S-x$.\\
+Se tiene que el costo de pedir $y$ unidades del producto es una función especificada, denotada por $c(y)$,
+y toma $L$ unidades de tiempo el envío, con el pago realizado en el momento de la entrega.\\
+También se tiene que la tienda paga un costo por mantener el inventario. Este costo es de $h$ (un valor fijo) por unidad de artículo por unidad de tiempo.
+Además, se tiene que siempre que un cliente demanda más del producto de lo que está disponible actualmente, entonces se vende la cantidad a mano y el resto del pedido se pierde para la tienda.
+
+\subsection{Objetivos y metas}
+
+El objetivo de la simulación es poder recoger un conjunto de estadísticas sobre como se comporta el sistema
+al variar ciertos parámetros y también optimizar los mismos para mejorar algunas de estas estadísticas.\\
+Las estadísticas de interés se sacan en un plazo de tiempo fijo (puede ser 1 día de trabajo, 1 semana, etc.) y algunas de estas son las siguientes:
+\begin{itemize}
+    \item Distribución en la linea de tiempo de la cantidad de clientes que llegaron a la tienda por hora.
+    \item Distribución en la linea de tiempo de la cantidad de pedidos de productos por hora vs la cantidad de productos que se pudieron vender (útil para detectar horas picos y ver gráficamente cuantos pedidos se perdieron por hora).
+    \item Razón entre la cantidad total de productos pedidos por clientes en un plazo de tiempo y la cantidad total de estos que se vendieron (recordar que puede que no se tengan los suficientes productos para satisfacer la demanda).
+    \item Distribución en la linea de tiempo (por horas) de cuanto se pagó por el mantenimiento del inventario.
+    \item Costo total (en el plazo de tiempo dado) del mantenimiento del inventario
+    \item Distribución en la linea de tiempo de como fue variando la cantidad de productos en el inventario
+    \item Costo total (en el plazo de tiempo dado) de los pedidos al proveedor.
+    \item Balance de la cuenta de la tienda al finalizar la simulación.
+\end{itemize}
+
+\subsection{Variables que describen el problema}
+
+Las variables con las que inicializamos la simulación son las siguientes:
+
+\begin{itemize}
+    \item $s$ $\to$ Entero que representa la cantidad mínima del producto que se puede tener en inventario de la tienda antes de solicitar un pedido al proveedor.
+    \item $S$ $\to$ Entero que representa la cantidad máxima del producto que se puede tener almacenado en el inventario de la tienda.
+    \item $initial\_inventory$ $\to$ Entero que representa la cantidad de producto que se tiene inicialmente en el inventario.
+    \item $ordering\_cost\_function$ $\to$ Función que recibe un entero $x$ y representa el costo de pedirle al proveedor $x$ unidades del producto.
+    \item $lead\_time$ $\to$ Entero que representa el tiempo que se demora en llegar el producto por parte del proveedor.
+    \item $holding\_cost\_rate$ $\to$ Entero que representa la constante de pago por mantener el inventario.
+    \item $product\_value$ $\to$ Entero que representa cuanto debe pagar un cliente por obtener el producto.
+    \item $client\_arrival\_dist$ $\to$ Función que devuelve el tiempo que se demora en aparecer el próximo cliente. Por defecto esta función representa la distribución de Poisson.
+    \item $client\_demand\_dist$ $\to$ Función que devuelve la cantidad de producto que pedirá el próximo cliente. Por defecto esta función representa una distribución uniforme.
+\end{itemize}
+
+\section{Detalles de implementación}
+
+Para implementar esta simulación seleccionamos el lenguaje Python debido al ecosistema de librerías que proporciona y los pasos que seguimos fueron los siguientes:
+\begin{itemize}
+    \item Desarrollamos 3 clases que modelan cada uno de los eventos de nuestra simulación. Estos son:
+    \begin{itemize}
+        \item \textbf{Sell} $\to$ Este evento representa el arribo de un cliente a la tienda pidiendo un producto. Tiene 2 propiedades:
+        \begin{itemize}
+            \item $time$ $\to$ El tiempo en el que el cliente llega a la tienda y realiza el pedido.
+            \item $amount$ $\to$ La cantidad de unidades que quiere comprar el cliente.
+        \end{itemize}
+        \item \textbf{SupplyArrival} $\to$ Este evento representa la llegada de productos a la tienda por parte del proveedor. Tiene 2 propiedades:
+        \begin{itemize}
+            \item $time$ $\to$ El tiempo en el que el envío llega a la tienda.
+            \item $amount$ $\to$ La cantidad de unidades recibidas.
+        \end{itemize}
+        \item \textbf{SimulationEnd} $\to$ Este evento representa el fin de la simulación y su único objetivo es detener esta al procesar el evento. Tiene como propiedad el tiempo ($time$) en el que se debe detener la simulación.
+    \end{itemize}
+    \item Desarrollamos 4 clases para representar registros de datos. Estos son necesarios a la hora extraer información estadística de la simulación. Estas son:
+    \begin{itemize}
+        \item \textbf{SellRegistry} $\to$ Este registro guarda información sobre las ventas a los clientes. Sus propiedades son:
+        \begin{itemize}
+            \item $time$ $\to$ El tiempo en el que ocurrió la venta.
+            \item $amount\_asked$ $\to$ Representa la cantidad de unidades del producto que el cliente quiere comprar.
+            \item $amount\_selled$ $\to$ Representa la cantidad de unidades del producto que la tienda es capaz de venderle al cliente (depende del inventario en ese momento).
+        \end{itemize}
+        \item \textbf{StockRegistry} Este registro guarda las variaciones de la cantidad de productos en el almacén. Cuando se realiza una venta de productos, o cuando se reciben productos del proveedor, es cuando se crea una entrada en este registro. Sus propiedades son:
+        \begin{itemize}
+            \item $time$ $\to$ Representa el tiempo en el que el almacén varió la cantidad de productos disponibles.
+            \item $amount$ $\to$ Representa la cantidad de productos en el almacén.
+        \end{itemize}
+        \item \textbf{BuyRegistry} $\to$ Este registro guarda los momentos en los que la tienda realiza un pedido de productos al proveedor. Tiene las siguientes propiedades:
+        \begin{itemize}
+            \item $time$ $\to$ Representa el tiempo en el que la tienda realiza el pedido.
+            \item $amount$ $\to$ Representa la cantidad de productos que pide la tienda.
+        \end{itemize}
+        \item \textbf{BalanceRegistry} $\to$ Este registro guarda la información referente al balance de la cuenta de la tienda a lo largo del tiempo. En nuestra simulación se asume que la tienda siempre tiene dinero para pagar, por lo que este registro realmente representa cuanto ha ganado o perdido la tienda desde el inicio de la simulación. Si el balance es bajo 0 la tienda está perdiendo dinero y si es mayor que 0 la tienda está ganando. Las propiedades de esta clase son:
+        \begin{itemize}
+            \item $time$ $\to$ Representa el tiempo en el que ocurrió un cambio de balance en la cuenta de la tienda.
+            \item $balance$ $\to$ Representa el valor del balance actual.
+        \end{itemize}
+    \end{itemize}
+    \item Desarrollamos la clase \textbf{InventorySimulation} que se encarga de correr la simulación de inventario. Esta clase genera los eventos mencionados anteriormente en el documento y los procesa. Cada vez que procesa los eventos se encarga de actualizar los registros pertinentes.
+    \item Desarrollamos la clase \textbf{Statistics} que se encarga de tomar los resultados guardados en los registros de una corrida de la simulación y los procesa para sacar estadísticas que muestran de forma general informaciones sobre las ventas de productos, compras al proveedor, variaciones del inventario y también información sobre el balance de la cuenta de la tienda.
+\end{itemize}
+
+Todo lo anterior es lo que creamos para analizar el comportamiento de nuestro modelo del sistema del Inventario y sacar informaciones estadísticas del mismo. Pero además de esto nosotros también creamos una clase que se encarga de optimizar los resultados de algunas estadísticas modificando algunos parámetros de la simulación. Esta clase se llama \textbf{Optimizer} usa Algoritmos genéticos
+para llevar a cabo la optimización.
+
+\section{Modelo Matemático}
+
+Una tienda tiene un almacén donde guarda un tipo de producto y los vende a un precio $p$ por unidad.
+La llegada de los clientes a la tienda se simula con una distribución $Poisson$ y la cantidad de unidades pedida es simulada con una función que distribuye $G$.
+La tienda usa una política de pedido $(s,S)$, donde $s<S$, tal que si la cantidad $x$ de unidades del producto en el almacén cumple que $x<s$ se tiene que la tienda pide al
+proveedor una cantidad $S-x$ de unidades del producto. Se tiene que el costo de pedir $y$ unidades del producto al proveedor es una función $c(y)$ y que la entrega
+del producto se demora $L$ unidades de tiempo, donde $L$ es constante. También hay un costo por el almacenamiento de los productos, este es de $h$ (constante) por unidad de producto por unidad de tiempo, donde la unidad de tiempo en este caso es 1 hora.
+\\\\
+Las variables con las que contamos en la simulación se pueden dividir en las siguientes categorías:
+\begin{itemize}
+    \item \textbf{Variables de tiempo}
+    \begin{itemize}
+        \item \textbf{t} $\to$ El tiempo global de la simulación.
+    \end{itemize}
+    \item \textbf{Variables de Registros}: Estas variables guardan información útil para análisis estadístico.
+    \begin{itemize}
+        \item \textbf{SellRegistry} $\to$  Este registro guarda información sobre las ventas a los clientes.
+        \item \textbf{StockRegistry} $\to$ Este registro guarda información sobre las variaciones de la cantidad de productos en el almacén.
+        \item \textbf{BuyRegistry} $\to$ Guarda información sobre los momentos en los que la tienda paga un pedido de productos al proveedor.
+        \item \textbf{BalanceRegistry} $\to$ Guarda la información referente al balance de la cuenta, es decir, cuanto a ganado o perdido en cada momento.
+        \item \textbf{PayHoldingRegistry} $\to$ Guarda la información de cada pago realizado por la tienda para mantener el inventario.
+    \end{itemize}
+    \item \textbf{Variables del estado del sistema}: Variables que muestran el estado del sistema en el tiempo $t$
+    \begin{itemize}
+        \item \textbf{actual\_balance} $\to$ Representa el balance de la cuenta de la tienda.
+        \item \textbf{actual\_inventory} $\to$ Representa la cantidad de unidades del producto que se tiene en el almacén.
+        \item \textbf{pending\_order} $\to$ Dice si hay un pedido pendiente o no.
+    \end{itemize}
+    \item \textbf{Lista de eventos}
+    \begin{itemize}
+        \item \textbf{Sell} $\to$ Este evento representa el arribo de un cliente a la tienda pidiendo un producto. Tiene 2 propiedades:
+        \begin{itemize}
+            \item $time$ $\to$ El tiempo en el que el cliente llega a la tienda y realiza el pedido.
+            \item $amount$ $\to$ La cantidad de unidades que quiere comprar el cliente.
+        \end{itemize}
+        \item \textbf{SupplyArrival} $\to$ Este evento representa la llegada de productos a la tienda por parte del proveedor. Tiene 2 propiedades:
+        \begin{itemize}
+            \item $time$ $\to$ El tiempo en el que el envío llega a la tienda.
+            \item $amount$ $\to$ La cantidad de unidades recibidas.
+        \end{itemize}
+        \item \textbf{PayHolding} $\to$ Este evento representa la orden de pagar por el servicio de mantener el inventario. Tiene solamente la propiedad \textbf{time} para representar el momento en el que se debe efectuar el pago.
+        \item \textbf{SimulationEnd} $\to$ Este evento representa el fin de la simulación y su único objetivo es detener esta al procesar el evento. Tiene como propiedad el tiempo ($time$) en el que se debe detener la simulación.
+    \end{itemize}
+    \item \textbf{Inicialización}
+    \begin{itemize}
+        \item \textbf{t} = 0
+        \item \textbf{actual\_balance} = 0
+        \item \textbf{actual\_inventory} = cantidad inicial en el almacén
+        \item \textbf{actual\_inventory} = false
+        \item Se verifica la política $(s,S)$ y si se debe pedir al proveedor se agrega a la cola de eventos el evento \textbf{SupplyArrival} en el tiempo $t + L$ y la cantidad $S-x$, donde $x$ es la cantidad actual en inventario.
+        \item Se genera el tiempo de arribo del próximo cliente, $t_c$, por la distribución Poisson. Se genera el la cantidad de unidades que pedirá, \textbf{amount}, por la distribución $G$. Se crea un evento \textbf{Sell} asignándole las anteriores variables y se agrega este evento en la cola de eventos.
+        \item Si el espacio de tiempo en el que se tiene que realizar el pago por mantener productos en el almacén está dado por la variable $t_a$, entonces se debe crear un evento \textbf{PayHolding} para el tiempo dado por $t+t_a$.
+        \item Se crea el evento \textbf{SimulationEnd} guardando el tiempo en el que debe terminar la simulación y este se agrega a la cola de eventos.
+    \end{itemize}
+    \item \textbf{Ciclo de la simulación} Se ejecuta mientras haya un evento en la cola. Aquí se extrae el evento con menor prioridad.
+    \begin{itemize}
+        \item Se guarda en la variable \textbf{E} el evento extraído de la cola de eventos.
+        \item Se actualiza el tiempo $t$ de la simulación al tiempo del evento \textbf{E}.
+        \item En dependencia del tipo de evento que represente \textbf{E} se cae en uno de 3 posibles casos. Estos se analizan más adelante en el documento.
+        \item Al finalizar de procesar el evento se verifica el nivel del inventario y si cumple con la política $(s,S)$ y además se tiene que no hay un pedido pendiente, es decir, que la variable \textbf{pending\_order} es \textbf{false}, se genera un evento \textbf{SupplyArrival} con tiempo $t_a = t + L$, (donde $L$ es el tiempo que se demora en llegar el envío del proveedor) y con la cantidad $S$ - \textbf{actual\_inventory}. Luego se agrega este evento a la cola de eventos y se actualiza la variable \textbf{pending\_order} a \textbf{true}.
+        \item Luego se genera con la distribución Poisson un nuevo $t_c$ que es el tiempo que se demorará en aparecer el próximo cliente. Se genera con la distribución $G$ un nuevo valor para \textbf{amount}, es decir, cuantas unidades ordenará este próximo cliente. Se crea un nuevo evento \textbf{Sell} con los valores $t + t_c$ para el tiempo y \textbf{amount} para la cantidad de unidades que pedirá. Luego se agrega a la cola de eventos.
+        \item Se actualiza el registro \textbf{BalanceRegistry} guardando los valores $t$ en la variable \textbf{time} y el \textbf{actual\_balance} en la variable \textbf{balance}.
+        \item Se actualiza el registro \textbf{StockRegistry} guardando el tiempo actual de la simulación, dado por la variable $t$ y la cantidad de unidades del producto en el almacén, dado por la variable \textbf{actual\_inventory}.
+    \end{itemize}
+    \item \textbf{Caso 1 - El evento E es de tipo Sell}
+    \begin{itemize}
+        \item Se extrae la cantidad de unidades que desea comprar el cliente en la variable \textbf{amount}.
+        \item Se calcula cuanto producto se puede vender al cliente con la fórmula \textbf{min(actual\_inventory, amount)} y se guarda en \textbf{sell\_amount}.
+        \item Se actualiza la variable \textbf{actual\_balance} a \textbf{actual\_balance}+= \textbf{p} $\cdot$ \textbf{sell\_amount}, donde \textbf{p} es el precio del producto.
+        \item Se actualiza la variable \textbf{actual\_inventory} a \textbf{actual\_inventory - sell\_amount}.
+        \item Se actualiza el registro \textbf{SellRegistry} guardando el tiempo actual de la simulación, dado por la variable $t$, la cantidad pedida, dada por \textbf{amount} y la cantidad que el almacén pudo vender, dado por \textbf{sell\_amount}.
+    \end{itemize}
+    \item \textbf{Caso 2 - El evento E es de tipo SupplyArrival}
+    \begin{itemize}
+        \item Se extrae la cantidad de unidades que se recibió por el proveedor en la variable \textbf{amount}.
+        \item Se actualiza la variable \textbf{actual\_inventory} a \textbf{actual\_inventory} + \textbf{amount}.
+        \item Si se recibieron $y$ unidades, entonces se calcula el costo por los productos recibidos con la función de costo de envío $c(y)$ y se almacena en la variable \textbf{cost}. Luego se actualiza la variable \textbf{actual\_balance} a \textbf{actual\_balance} - \textbf{cost}.
+        \item Se actualiza la variable \textbf{pending\_order} a \textbf{false}.
+        \item Se actualiza el registro \textbf{BuyRegistry} guardando el tiempo actual de la simulación, dado por la variable $t$, y se guarda el número de unidades recibido, dado por la variable \textbf{amount}.
+    \end{itemize}
+    \item \textbf{Caso 3 - El evento E es de tipo PayHolding}
+    \begin{itemize}
+        \item Se calcula el costo por mantener el inventario y se guarda en \textbf{cost}.
+        \item Se actualiza la variable \textbf{actual\_balance} a \textbf{actual\_balance} - \textbf{cost}.
+        \item Se actualiza el registro \textbf{PayHoldingRegistry} guardando el tiempo en el que se realizó el pago con el tiempo actual de la simulación, dado por la variable $t$, y guardando el costo de este pago, almacenado en \textbf{cost}.
+        \item Se genera un nuevo evento \textbf{PayHolding} para el tiempo $t + t_a$, donde $t_a$ es el tiempo que hay entre pagos por el mantenimiento del almacén. Luego se agrega este evento a la cola de eventos.
+    \end{itemize}
+    \item \textbf{Caso 4 - El evento E es de tipo SimulationEnd} $\to$ En este caso simplemente se detiene la simulación, es decir, se sale del ciclo.
+\end{itemize}
+
+Lo descrito anteriormente es la formalización del modelo de la simulación, pero hay algunos puntos a aclarar.
+\begin{itemize}
+    \item En nuestro modelo se asume que la tienda siempre tiene dinero para pagar, de donde que el \textbf{balance} de la tienda sea \textbf{negativo} no significa que la tienda esté sin dinero, solamente significa que la tienda está perdiendo dinero.
+    \item Se asume que el tiempo de atención al cliente es instantáneo. Por esto en nuestra simulación ningún cliente debe esperar en una cola a ser atendido.
+    \item Los eventos generados se agregan en una cola de prioridad (donde el menor elemento sale primero). La prioridad está dada por el tiempo en el que se debe procesar el evento. En caso de que más de 1 evento tenga lugar en el mismo espacio de tiempo, se desambigua por la prioridad que se tiene entre eventos. Esta se muestra a continuación.
+    \begin{enumerate}
+        \item \textbf{SimulationEnd}
+        \item \textbf{SupplyArrival}
+        \item \textbf{Sell}
+        \item \textbf{PayHolding}
+    \end{enumerate}
+\end{itemize}
+
+\section{Resultados y experimentos}
+
+Esto es algo a rellenar.
+
+\end{document}
