@@ -18,23 +18,32 @@ class Registry:
         record = SellRecord(time, amount_asked, amount_seeled)
         sell_list = self.sell_registry.get(time, [])
         sell_list.append(record)
-        pass
 
     def add_stock_record(self, time: int, amount: int):
         """Create a StockRecord and stores it in the stock_registry"""
-        pass
+        actual_stock = self.stock_registry.get(time, None)
+        if actual_stock:
+            self.stock_registry[time].amount = amount
+        else:
+            self.stock_registry[time] = StockRecord(time, amount)
 
     def add_buy_record(self, time: int, amount: int):
         """Create a BuyRecord and stores it in the buy_registry"""
-        pass
+        record = BuyRecord(time, amount)
+        self.buy_registry[time] = record
 
     def add_balance_record(self, time: int, balance: int):
         """Create a BalanceRecord and stores it in the balance_registry"""
-        pass
+        actual_balance = self.balance_registry.get(time)
+        if actual_balance:
+            self.balance_registry[time].balance = balance
+        else:
+            self.balance_registry[time] = BalanceRecord(time, balance)
 
     def add_pay_holding_record(self, time: int, cost: int):
         """Create a PayHoldingRecord and stores it in the pay_holding_registry"""
-        pass
+        record = PayHoldingRecord(self, time, cost)
+        self.pay_holding_registry[time] = record
 
 
 class Record:
