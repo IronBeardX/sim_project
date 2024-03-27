@@ -20,19 +20,19 @@ class Registry:
         sell_list.append(record)
         pass
 
-    def add_stock_record():
+    def add_stock_record(self, time: int, amount: int):
         """Create a StockRecord and stores it in the stock_registry"""
         pass
 
-    def add_buy_record():
+    def add_buy_record(self, time: int, amount: int):
         """Create a BuyRecord and stores it in the buy_registry"""
         pass
 
-    def add_balance_record():
+    def add_balance_record(self, time: int, balance: int):
         """Create a BalanceRecord and stores it in the balance_registry"""
         pass
 
-    def add_pay_holding_record():
+    def add_pay_holding_record(self, time: int, cost: int):
         """Create a PayHoldingRecord and stores it in the pay_holding_registry"""
         pass
 
