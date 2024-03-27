@@ -2,7 +2,16 @@
 class Registry:
     """This is the class for store useful information of the simulation"""
     def __init__(self) -> None:
-        self.sell_registry:dict[int,]
+        self.sell_registry:dict[int,SellRecord] = {}
+        """Stores the sell records of the entire simulation"""
+        self.stock_registry:dict[int, StockRecord] = {}
+        """Stores the stock records of the entire simulation"""
+        self.buy_registry:dict[int, BuyRecord] = {}
+        """Stores the buy records of the entire simulation"""
+        self.balance_registry:dict[int, BalanceRecord] = {}
+        """Stores the balance records of the store in the entire simulation"""
+        self.pay_holding_registry:dict[int, PayHoldingRecord] = {}
+        """Stores all payments made by the store to the storage service"""
 
 
 class Record:
