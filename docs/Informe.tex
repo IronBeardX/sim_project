@@ -181,7 +181,7 @@ Las variables con las que contamos en la simulación se pueden dividir en las si
     \begin{itemize}
         \item Se extrae la cantidad de unidades que desea comprar el cliente en la variable \textbf{amount}.
         \item Se calcula cuanto producto se puede vender al cliente con la fórmula \textbf{min(actual\_inventory, amount)} y se guarda en \textbf{sell\_amount}.
-        \item Se actualiza la variable \textbf{actual\_balance} a \textbf{actual\_balance}+= \textbf{p} $\cdot$ \textbf{sell\_amount}, donde \textbf{p} es el precio del producto.
+        \item Se actualiza la variable \textbf{actual\_balance} a \textbf{actual\_balance}+= \textbf{p} $\cdot$ \textbf{sell\_amount} $\cdot$ \textbf{amount}, donde \textbf{p} es el precio del producto.
         \item Se actualiza la variable \textbf{actual\_inventory} a \textbf{actual\_inventory - sell\_amount}.
         \item Se actualiza el registro \textbf{SellRegistry} guardando el tiempo actual de la simulación, dado por la variable $t$, la cantidad pedida, dada por \textbf{amount} y la cantidad que el almacén pudo vender, dado por \textbf{sell\_amount}.
     \end{itemize}

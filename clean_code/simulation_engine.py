@@ -49,6 +49,8 @@ class InventorySimulation:
         self.initial_inventory_level: int = initial_inventory_level
         self.actual_inventory_level: int = initial_inventory_level
         self.pending_order: bool = False
+        self.sim_over: bool = False
+        """Says if the simulation is over"""
         # -------- Simulation queue --------
         self.event_queue: list[Event] = []
         """The priority queue of events"""
@@ -62,6 +64,7 @@ class InventorySimulation:
         self.actual_inventory_level = self.initial_inventory_level
         self.pending_order = False
         self.registry = Registry()
+        self.sim_over = False
         self.verify_supply_policy()
         self.generate_client_sell_event()
         self.generate_pay_holding_event()
@@ -105,17 +108,37 @@ class InventorySimulation:
         event: Event = heapq.heappop(self.event_queue)
         return event
 
-    def process_sell_event(self):
+    def process_sell_event(self, event: SellEvent):
+        """Process the event of the arrival of a new client wanting to buy some units of the product"""
+        amount = event.amount
+        sell_amount: int = min(self.actual_inventory_level, amount)
+        self.actual_balance += self.product_value * sell_amount * amount
+        self.actual_inventory_level -= sell_amount
+        self.registry.add_sell_record(
+            self.time, amount_asked=amount, amount_seeled=sell_amount
+        )
+
+    def process_supply_arrival_event(self, event: SupplyArrivalEvent):
         pass
 
-    def process_supply_arrival_event(self):
+    def process_pay_holding_event(self, event: PayHoldingEvent):
+        """Process the event of paying the service for holding inventory"""
         pass
 
-    def process_pay_holding_event(self):
-        pass
+    def process_simulation_end(self, event: SimulationEndEvent):
+        """Stops the simulation by updating the variable self.sim_over"""
+        self.sim_over = True
 
-    def process_simulation_end(self):
-        pass
+    def process_event(self, event: Event):
+        """Process an event depending of its type. Returns a bool that says if the simulation is over"""
+        if isinstance(event, SellEvent):
+            self.process_sell_event(event)
+        elif isinstance(event, SupplyArrivalEvent):
+            self.process_supply_arrival_event(event)
+        elif isinstance(event, PayHoldingEvent):
+            self.process_pay_holding_event(event)
+        else:
+            self.process_simulation_end(event)
 
     def step(self):
         """Extracts the next event in the Event Queue and process it"""
@@ -123,6 +146,18 @@ class InventorySimulation:
         time = event.time
         self.time = time  # Advance the simulation time to the Event time
 
+        self.process_event(event)
+
+        # Generate the new events
+        self.verify_supply_policy()
+        self.generate_client_sell_event()
+
+        # Update the registries
+        self.registry.add_balance_record(self.time, self.actual_balance)
+        self.registry.add_stock_record(self.time, self.actual_inventory_level)
+
     def run(self):
         """Run the simulation"""
         self.initialize()
+        while not self.sim_over:
+            self.step()
