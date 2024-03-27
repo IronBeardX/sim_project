@@ -88,7 +88,7 @@ Para implementar esta simulación seleccionamos el lenguaje Python debido al eco
         \begin{itemize}
             \item $time$ $\to$ El tiempo en el que ocurrió la venta.
             \item $amount\_asked$ $\to$ Representa la cantidad de unidades del producto que el cliente quiere comprar.
-            \item $amount\_selled$ $\to$ Representa la cantidad de unidades del producto que la tienda es capaz de venderle al cliente (depende del inventario en ese momento).
+            \item $amount\_seeled$ $\to$ Representa la cantidad de unidades del producto que la tienda es capaz de venderle al cliente (depende del inventario en ese momento).
         \end{itemize}
         \item \textbf{StockRegistry} Este registro guarda las variaciones de la cantidad de productos en el almacén. Cuando se realiza una venta de productos, o cuando se reciben productos del proveedor, es cuando se crea una entrada en este registro. Sus propiedades son:
         \begin{itemize}
@@ -206,7 +206,7 @@ Las variables con las que contamos en la simulación se pueden dividir en las si
 Lo descrito anteriormente es la formalización del modelo de la simulación, pero hay algunos puntos a aclarar.
 \begin{itemize}
     \item En nuestro modelo se asume que la tienda siempre tiene dinero para pagar, de donde que el \textbf{balance} de la tienda sea \textbf{negativo} no significa que la tienda esté sin dinero, solamente significa que la tienda está perdiendo dinero.
-    \item Se asume que el tiempo de atención al cliente es instantáneo. Por esto en nuestra simulación ningún cliente debe esperar en una cola a ser atendido.
+    \item Se asume que el tiempo de atención al cliente es instantáneo. Por esto en nuestra simulación ningún cliente debe esperar en una cola a ser atendido. Además, si hay mas de 1 cliente en la tienda al mismo tiempo (algo posible), se asume que la tienda atiende a todos los clientes de forma instantánea (en el mundo esta es la tienda mas eficaz en este aspecto, de hecho, la única) y se agrega al registro de ventas una lista de ventas en ese mismo tiempo.
     \item Los eventos generados se agregan en una cola de prioridad (donde el menor elemento sale primero). La prioridad está dada por el tiempo en el que se debe procesar el evento. En caso de que más de 1 evento tenga lugar en el mismo espacio de tiempo, se desambigua por la prioridad que se tiene entre eventos. Esta se muestra a continuación.
     \begin{enumerate}
         \item \textbf{SimulationEnd}
