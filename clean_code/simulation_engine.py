@@ -64,6 +64,7 @@ class InventorySimulation:
         self.registry = Registry()
         self.verify_supply_policy()
         self.generate_client_sell_event()
+        self.generate_pay_holding_event()
         self.add_simulation_end_event()
 
     def generate_client_sell_event(self):
