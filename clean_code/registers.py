@@ -16,8 +16,9 @@ class Registry:
     def add_sell_record(self, time: int, amount_asked: int, amount_seeled: int):
         """Create a SellRecord and stores it in the sell_registry"""
         record = SellRecord(time, amount_asked, amount_seeled)
-        sell_list = self.sell_registry.get(time, [])
+        sell_list = self.sell_registry.setdefault(time, [])
         sell_list.append(record)
+        self.sell_registry.update()
 
     def add_stock_record(self, time: int, amount: int):
         """Create a StockRecord and stores it in the stock_registry"""
@@ -42,7 +43,7 @@ class Registry:
 
     def add_pay_holding_record(self, time: int, cost: int):
         """Create a PayHoldingRecord and stores it in the pay_holding_registry"""
-        record = PayHoldingRecord(self, time, cost)
+        record = PayHoldingRecord(time, cost)
         self.pay_holding_registry[time] = record
 
 
@@ -62,7 +63,8 @@ class SellRecord(Record):
         """The units that the client asked to buy"""
         self.amount_seeled: int = amount_seeled
         """The number of units that the store could sell to the client"""
-
+    def __str__(self) -> str:
+        return f"SellRecord (time = {self.time}, amount asked = {self.amount_asked}, amount seeled = {self.amount_seeled})"
 
 class StockRecord(Record):
     """This record store the information of the number of units of the product in storage at a time"""
@@ -71,6 +73,9 @@ class StockRecord(Record):
         super().__init__(time)
         self.amount: int = amount
         """The number of units of the product that are available in the store"""
+    
+    def __str__(self) -> str:
+        return f"StockRecord (time = {self.time}, stock amount = {self.amount})"
 
 
 class BuyRecord(Record):
@@ -81,6 +86,8 @@ class BuyRecord(Record):
         self.amount: int = amount
         """The number of units that the store just bought to the provider"""
 
+    def __str__(self) -> str:
+        return f"BuyRecord (time = {self.time}, number of units received = {self.amount})"
 
 class BalanceRecord(Record):
     """This records represents the balance of the store at this point in time"""
@@ -90,6 +97,9 @@ class BalanceRecord(Record):
         self.balance: int = balance
         """The balance of the store at this point in time"""
 
+    def __str__(self) -> str:
+        return f"BalanceRecord (time = {self.time}, actual balance of store = {self.balance})"
+
 
 class PayHoldingRecord(Record):
     """This record represents the amount of money the store is paying for the storage service at a point in time"""
@@ -98,3 +108,6 @@ class PayHoldingRecord(Record):
         super().__init__(time)
         self.cost: int = cost
         """The amount of money the store is paying for the storage service"""
+
+    def __str__(self) -> str:
+        return f"PayHoldingRecord (time = {self.time}, holding cost payed = {self.cost})"

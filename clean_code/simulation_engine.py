@@ -2,8 +2,8 @@ import random
 from typing import Callable
 import heapq
 
-from clean_code.registers import *
-from clean_code.events import *
+from registers import *
+from events import *
 from utils import poisson_random_variable
 
 
@@ -18,8 +18,8 @@ class InventorySimulation:
         holding_cost_rate: int = 3,  # The pay constant for holding inventory
         holding_pay_time: int = 60,  # 60 minutes, 1 hour. After that time the store must pay for the inventory
         product_value: int = 10,
-        client_arrival_dist: Callable[[], int] = poisson_random_variable(5),
-        client_demand_dist: Callable = random.randint(1, 10),
+        client_arrival_dist: Callable[[], int] = lambda: poisson_random_variable(5),
+        client_demand_dist: Callable[[], int] = lambda: random.randint(1, 10),
         sim_duration: int = 840,  # 14 hours -> 14 * 60min = 840min
     ):
         if s >= S:
@@ -119,11 +119,21 @@ class InventorySimulation:
         )
 
     def process_supply_arrival_event(self, event: SupplyArrivalEvent):
-        pass
+        """Process the event of the arrival of product supplies from the supplier"""
+        amount = event.amount
+        self.actual_inventory_level += amount
+        cost = self.ordering_cost_func(amount)
+        self.actual_balance -= cost
+        self.pending_order = False
+        self.registry.add_buy_record(self.time, amount)
 
     def process_pay_holding_event(self, event: PayHoldingEvent):
         """Process the event of paying the service for holding inventory"""
-        pass
+        inventory_level = self.actual_inventory_level
+        hold_cost: int = self.holding_cost_rate * inventory_level
+        self.actual_balance += hold_cost
+        self.registry.add_pay_holding_record(self.time, hold_cost)
+        self.generate_pay_holding_event()
 
     def process_simulation_end(self, event: SimulationEndEvent):
         """Stops the simulation by updating the variable self.sim_over"""
