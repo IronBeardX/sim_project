@@ -19,8 +19,7 @@ class InventorySimulation:
         # 60 minutes, 1 hour. After that time the store must pay for the inventory
         holding_pay_time: int = 60,
         product_value: int = 10,
-        client_arrival_dist: Callable[[],
-                                      int] = lambda: poisson_random_variable(5),
+        client_arrival_dist: Callable[[], int] = lambda: poisson_random_variable(5),
         client_demand_dist: Callable[[], int] = lambda: random.randint(1, 10),
         sim_duration: int = 840,  # 14 hours -> 14 * 60min = 840min
     ):
@@ -74,7 +73,9 @@ class InventorySimulation:
 
     def generate_client_sell_event(self):
         """Generate a new Sell Event and push it to the queue"""
-        time: int = self.client_arrival_dist()
+        time = 0
+        while time == 0:
+            time: int = self.client_arrival_dist()
         amount: int = self.client_demand_dist()
         client_event: SellEvent = SellEvent(self.time + time, amount)
         self.add_to_event_queue(client_event)
@@ -145,6 +146,7 @@ class InventorySimulation:
         """Process an event depending of its type. Returns a bool that says if the simulation is over"""
         if isinstance(event, SellEvent):
             self.process_sell_event(event)
+            self.generate_client_sell_event()
         elif isinstance(event, SupplyArrivalEvent):
             self.process_supply_arrival_event(event)
         elif isinstance(event, PayHoldingEvent):
@@ -164,7 +166,6 @@ class InventorySimulation:
 
         # Generate the new events
         self.verify_supply_policy()
-        self.generate_client_sell_event()
 
         # Update the registries
         self.registry.add_balance_record(self.time, self.actual_balance)
@@ -175,3 +176,10 @@ class InventorySimulation:
         self.initialize()
         while not self.sim_over:
             self.step()
+
+    def run_with(self, s: int, S: int):
+        if S < s or s < 0:
+            raise Exception("The values of policy (s,S) are invalid")
+        self.s = s
+        self.S = S
+        self.run()
