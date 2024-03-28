@@ -18,6 +18,7 @@ class SimStatistics:
         for time, sell_list in sells:
             demand = 0
             sold = 0
+            print(len(sell_list))
             for sell in sell_list:
                 demand += sell.amount_asked
                 sold += sell.amount_seeled
@@ -42,6 +43,24 @@ class SimStatistics:
         # plt.title('Stock of the store')
         plt.legend()
 
+    def plot_loss(self) -> None:
+        sells: list[tuple[int, list[SellRecord]]] = self.flat_registry.flat_sells
+        plot_data = []
+
+        for time, sell_list in sells:
+            demand = 0
+            sold = 0
+            for sell in sell_list:
+                demand += sell.amount_asked
+                sold += sell.amount_seeled
+            plot_data.append((time, demand - sold))
+
+        plt.plot(*zip(*plot_data), label='Loss', color='r')
+        plt.xlabel('Time')
+        plt.ylabel('Amount')
+        # plt.title('Loss of the store')
+        plt.legend()
+
     def plot_holding_costs(self) -> None:
         pay_holding: list[tuple[int, PayHoldingRecord]] = self.flat_registry.flat_pay_holding
         plot_data = []
@@ -51,6 +70,17 @@ class SimStatistics:
         plt.xlabel('Time')
         plt.ylabel('Amount')
         # plt.title('Holding Cost of the store')
+        plt.legend()
+
+    def plot_buy(self) -> None:
+        buy: list[tuple[int, BuyRecord]] = self.flat_registry.flat_buy
+        plot_data = []
+        for time, buy_record in buy:
+            plot_data.append((time, buy_record.amount))
+        plt.plot(*zip(*plot_data), label='Buy', color='g')
+        plt.xlabel('Time')
+        plt.ylabel('Amount')
+        # plt.title('Buy of the store')
         plt.legend()
 
     def plot_bar_sell(self) -> None:
