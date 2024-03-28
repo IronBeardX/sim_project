@@ -7,6 +7,10 @@ sim = InventorySimulation(sim_duration=simulation_time, s=10, S= 200)
 sim.run()
 
 sim_statistics = SimStatistics(sim.registry)
+plt.figure(figsize=(12, 20))
+plt.title('Simulation Statistics')
+sim_statistics.plot_balance()
+plt.show()
 # plotting the seels of the store
 plt.figure(figsize=(12, 20))
 plt.title('Simulation Statistics')

@@ -100,12 +100,19 @@ class SimStatistics:
 
     def plot_balance(self) -> None:
         balance: list[tuple[int, BalanceRecord]] = self.flat_registry.flat_balance
+        plot_data = []
         for time, balance_record in balance:
-            plt.plot(time, balance_record.balance, 'go')
+            plot_data.append((time, balance_record.balance))
+        # plt.plot(*zip(*plot_data), label='Balance', color='b')
+        # Dividing data in two parts, ones with positive balance and other with negative balance
+        positive_data = [(time, balance) for time, balance in plot_data if balance > 0]
+        negative_data = [(time, -balance) for time, balance in plot_data if balance < 0]
+        plt.plot(*zip(*positive_data), label='Positive Balance', color='g')
+        plt.plot(*zip(*negative_data), label='Negative Balance', color='r')
         plt.xlabel('Time')
         plt.ylabel('Amount')
-        plt.title('Balance of the store')
-        plt.show()
+        # plt.title('Balance of the store')
+        plt.legend()
 
 
 class FlattenRegistry:
