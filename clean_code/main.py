@@ -1,6 +1,8 @@
 from simulation_engine import *
 from sim_stats import FlattenRegistry, SimStatistics
 import matplotlib.pyplot as plt
+from optimizer import OptimizeSimulation
+
 simulation_time:int = 24 * 60 # 14 hours * 60 min = 840
 # The simulation time is in minutes
 sim = InventorySimulation(sim_duration=simulation_time, s=10, S= 200)
@@ -29,3 +31,9 @@ plt.title('Simulation Statistics')
 # plt.subplot(3, 1, 3)
 sim_statistics.plot_holding_costs()
 plt.show()
+
+# ------------- Optimization -----------
+
+opt = OptimizeSimulation(sim, 30)
+res = opt.optimize(steps_search=10)
+print(res)
