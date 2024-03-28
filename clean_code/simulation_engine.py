@@ -147,8 +147,10 @@ class InventorySimulation:
             self.process_supply_arrival_event(event)
         elif isinstance(event, PayHoldingEvent):
             self.process_pay_holding_event(event)
-        else:
+        elif isinstance(event, SimulationEndEvent):
             self.process_simulation_end(event)
+        else:
+            raise Exception("Unknown event type")
 
     def step(self):
         """Extracts the next event in the Event Queue and process it"""

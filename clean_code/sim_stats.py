@@ -11,7 +11,7 @@ class SimStatistics:
 
     # Plot the sells of the store along the time where it shows how much was asked and how much was seeled
     def plot_sells(self) -> None:
-        sells = self.flat_registry.flat_sells
+        sells: list[tuple[int, list[SellRecord]]] = self.flat_registry.flat_sells
         for time, sell_list in sells:
             amount_asked = 0
             amount_seeled = 0
@@ -22,7 +22,7 @@ class SimStatistics:
             plt.plot(time, amount_seeled, 'bo')
         plt.xlabel('Time')
         plt.ylabel('Amount')
-        plt.title('Sells of the store')
+        plt.title('Sales of the store')
         plt.show()
 
 
