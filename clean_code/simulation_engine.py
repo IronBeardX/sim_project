@@ -16,9 +16,11 @@ class InventorySimulation:
         ordering_cost_function: Callable[[int], int] = lambda x: x * 10,
         lead_time: int = 10,
         holding_cost_rate: int = 3,  # The pay constant for holding inventory
-        holding_pay_time: int = 60,  # 60 minutes, 1 hour. After that time the store must pay for the inventory
+        # 60 minutes, 1 hour. After that time the store must pay for the inventory
+        holding_pay_time: int = 60,
         product_value: int = 10,
-        client_arrival_dist: Callable[[], int] = lambda: poisson_random_variable(5),
+        client_arrival_dist: Callable[[],
+                                      int] = lambda: poisson_random_variable(5),
         client_demand_dist: Callable[[], int] = lambda: random.randint(1, 10),
         sim_duration: int = 840,  # 14 hours -> 14 * 60min = 840min
     ):
@@ -112,7 +114,7 @@ class InventorySimulation:
         """Process the event of the arrival of a new client wanting to buy some units of the product"""
         amount = event.amount
         sell_amount: int = min(self.actual_inventory_level, amount)
-        self.actual_balance += self.product_value * sell_amount * amount
+        self.actual_balance += self.product_value * sell_amount
         self.actual_inventory_level -= sell_amount
         self.registry.add_sell_record(
             self.time, amount_asked=amount, amount_seeled=sell_amount

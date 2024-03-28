@@ -25,6 +25,39 @@ class SimStatistics:
         plt.title('Sales of the store')
         plt.show()
 
+    def plot_bar_sell(self) -> None:
+        sells: list[tuple[int, list[SellRecord]]] = self.flat_registry.flat_sells
+        for time, sell_list in sells:
+            amount_asked = 0
+            amount_seeled = 0
+            for sell in sell_list:
+                amount_asked += sell.amount_asked
+                amount_seeled += sell.amount_seeled
+            plt.bar(time, amount_asked, color='r')
+            plt.bar(time, amount_seeled, color='b')
+        plt.xlabel('Time')
+        plt.ylabel('Amount')
+        plt.title('Sales of the store')
+        plt.show()
+
+    def plot_stock(self) -> None:
+        stock: list[tuple[int, StockRecord]] = self.flat_registry.flat_stock
+        for time, stock_record in stock:
+            plt.plot(time, stock_record.amount, 'go')
+        plt.xlabel('Time')
+        plt.ylabel('Amount')
+        plt.title('Stock of the store')
+        plt.show()
+
+    def plot_balance(self) -> None:
+        balance: list[tuple[int, BalanceRecord]] = self.flat_registry.flat_balance
+        for time, balance_record in balance:
+            plt.plot(time, balance_record.balance, 'go')
+        plt.xlabel('Time')
+        plt.ylabel('Amount')
+        plt.title('Balance of the store')
+        plt.show()
+
 
 class FlattenRegistry:
     def __init__(self, registry: Registry) -> None:
