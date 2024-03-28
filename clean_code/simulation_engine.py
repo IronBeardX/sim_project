@@ -147,6 +147,7 @@ class InventorySimulation:
         """Process an event depending of its type. Returns a bool that says if the simulation is over"""
         if isinstance(event, SellEvent):
             self.process_sell_event(event)
+            self.generate_client_sell_event()
         elif isinstance(event, SupplyArrivalEvent):
             self.process_supply_arrival_event(event)
         elif isinstance(event, PayHoldingEvent):
@@ -166,7 +167,6 @@ class InventorySimulation:
 
         # Generate the new events
         self.verify_supply_policy()
-        self.generate_client_sell_event()
 
         # Update the registries
         self.registry.add_balance_record(self.time, self.actual_balance)
