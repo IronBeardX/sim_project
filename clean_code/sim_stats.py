@@ -9,6 +9,21 @@ class SimStatistics:
     def __init__(self, registry: Registry) -> None:
         self.flat_registry: FlattenRegistry = FlattenRegistry(registry)
 
+    def give_fitness(self):
+        """Fitness useful for optimization"""
+        sells: list[tuple[int, list[SellRecord]]] = self.flat_registry.flat_sells
+        hold_costs: list[tuple[int, PayHoldingRecord]] = self.flat_registry.flat_pay_holding
+        buy_costs:list[tuple[int, BuyRecord]] = self.flat_registry.flat_buy
+
+        total_loss = 0
+        for _, sell in sells:
+            loss = sum(map(lambda x: x.amount_asked - x.amount_seeled, sell))
+            total_loss += loss
+        total_hold_cost = sum(map(lambda t: t[1].cost, hold_costs))
+        total_buy_cost = sum(map(lambda t: t[1].amount, buy_costs))
+        return 3*total_loss + total_buy_cost + 2*total_hold_cost
+
+
     # Plot the sells of the store along the time where it shows how much was asked and how much was seeled
     def plot_sells(self) -> None:
         sells: list[tuple[int, list[SellRecord]]] = self.flat_registry.flat_sells

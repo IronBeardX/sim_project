@@ -19,8 +19,7 @@ class InventorySimulation:
         # 60 minutes, 1 hour. After that time the store must pay for the inventory
         holding_pay_time: int = 60,
         product_value: int = 10,
-        client_arrival_dist: Callable[[],
-                                      int] = lambda: poisson_random_variable(5),
+        client_arrival_dist: Callable[[], int] = lambda: poisson_random_variable(5),
         client_demand_dist: Callable[[], int] = lambda: random.randint(1, 10),
         sim_duration: int = 840,  # 14 hours -> 14 * 60min = 840min
     ):
@@ -177,3 +176,10 @@ class InventorySimulation:
         self.initialize()
         while not self.sim_over:
             self.step()
+
+    def run_with(self, s: int, S: int):
+        if S < s or s < 0:
+            raise Exception("The values of policy (s,S) are invalid")
+        self.s = s
+        self.S = S
+        self.run()
