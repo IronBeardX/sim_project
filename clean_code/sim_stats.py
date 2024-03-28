@@ -18,8 +18,8 @@ class SimStatistics:
             for sell in sell_list:
                 amount_asked += sell.amount_asked
                 amount_seeled += sell.amount_seeled
-            plt.plot(time, amount_asked, 'ro')
-            plt.plot(time, amount_seeled, 'bo')
+            plt.plot(time, amount_asked, 'red')
+            plt.plot(time, amount_seeled, 'green')
         plt.xlabel('Time')
         plt.ylabel('Amount')
         plt.title('Sales of the store')
