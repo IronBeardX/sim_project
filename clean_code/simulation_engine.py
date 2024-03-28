@@ -74,7 +74,9 @@ class InventorySimulation:
 
     def generate_client_sell_event(self):
         """Generate a new Sell Event and push it to the queue"""
-        time: int = self.client_arrival_dist()
+        time = 0
+        while time == 0:
+            time: int = self.client_arrival_dist()
         amount: int = self.client_demand_dist()
         client_event: SellEvent = SellEvent(self.time + time, amount)
         self.add_to_event_queue(client_event)
