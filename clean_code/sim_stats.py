@@ -1,11 +1,13 @@
 # This file will contain a class that will generate statistics from the Registry class of the simulation
 import matplotlib.pyplot as plt
 import numpy as np
+from typing import Callable
 
 from registers import *
 
 
 class SimStatistics:
+    """This class extracts statistics from a simulation"""
     def __init__(self, registry: Registry) -> None:
         self.flat_registry: FlattenRegistry = FlattenRegistry(registry)
 
@@ -22,6 +24,61 @@ class SimStatistics:
         total_hold_cost = sum(map(lambda t: t[1].cost, hold_costs))
         total_buy_cost = sum(map(lambda t: t[1].amount, buy_costs))
         return 3*total_loss + total_buy_cost + 2*total_hold_cost
+    
+    def get_sells_data(self, process_function:Callable[[list[SellRecord]], float]) -> tuple[list[int], list[float]]:
+        """This function returns a tuple of 2 lists.
+        The first list is a list of integers representing the time.
+        The second list is a list of floats representing some processed value of the sells at that time.
+        The 'process function' is a function that receives a list of SellsRecords and return some float representing statistic information of that list of sales
+        """
+        return SimStatistics.get_data(self.flat_registry.flat_sells, process_function)
+    
+    def get_buy_data(self, process_function: Callable[[BuyRecord], float]):
+        """This function returns a tuple of 2 lists.
+        The first list is a list of integers representing the time.
+        The second list is a list of floats representing some processed value of the BuyRecord at that time.
+        The 'process function' is a function that receives a single BuyRecord and return some float representing statistic information about it
+        """
+        return SimStatistics.get_data(self.flat_registry.flat_buy, process_function)
+    
+    def get_stock_data(self, process_function: Callable[[StockRecord], float]):
+        """This function returns a tuple of 2 lists.
+        The first list is a list of integers representing the time.
+        The second list is a list of floats representing some processed value of the StockRecord at that time.
+        The 'process function' is a function that receives a single StockRecord and return some float representing statistic information about it
+        """
+        return SimStatistics.get_data(self.flat_registry.flat_stock, process_function)
+    
+    def get_balance_data(self, process_function: Callable[[BalanceRecord], float]):
+        """This function returns a tuple of 2 lists.
+        The first list is a list of integers representing the time.
+        The second list is a list of floats representing some processed value of the BalanceRecord at that time.
+        The 'process function' is a function that receives a single BalanceRecord and return some float representing statistic information about it
+        """
+        return SimStatistics.get_data(self.flat_registry.flat_balance, process_function)
+    
+    def get_pay_hold_data(self, process_function: Callable[[PayHoldingRecord], float]):
+        """This function returns a tuple of 2 lists.
+        The first list is a list of integers representing the time.
+        The second list is a list of floats representing some processed value of the PayHoldingRecord at that time.
+        The 'process function' is a function that receives a single PayHoldingRecord and return some float representing statistic information about it
+        """
+        return SimStatistics.get_data(self.flat_registry.flat_pay_holding, process_function)
+
+    @staticmethod
+    def get_data[T](raw_data:list[tuple[int,T]], process_function:Callable[[T], float]) -> tuple[list[int], list[float]]:
+        """This function returns a tuple of 2 lists.
+        The first list is a list of integers representing the time.
+        The second list is a list of floats representing some processed value of the elements of data in the raw_data input.
+        The 'process_function' is a function that receives some value and computes some float representing statistic information about the value
+        """
+        time:list[int] = []
+        values: list[float] = []
+        
+        for t, val in raw_data:
+            time.append(t)
+            values.append(process_function(val))
+        return time, values
 
 
     # Plot the sells of the store along the time where it shows how much was asked and how much was seeled

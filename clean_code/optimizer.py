@@ -25,7 +25,7 @@ class OptimizeSimulation:
             results.append(cost)
         return np.mean(results)
 
-    def optimize(self, steps_search:int = 5):
+    def optimize(self, steps_search:int = 5, single_point: bool = False):
         sim = self.simulation
         policy = (sim.s,sim.S)
         actual_best = self.fitness_function(policy[0], policy[1])
@@ -35,7 +35,9 @@ class OptimizeSimulation:
         
         for i in range(steps_search):
             neighbors_fitness = []
-            for n in self.get_neighbors(path[-1][0], path[-1][1]):
+            point = path[-1][0], path[-1][1]
+            neighbors = self.single_point_neighbors(point[0],point[1]) if single_point else self.get_neighbors(point[0], point[1])
+            for n in neighbors:
                 if n in visited_points:
                     continue
                 neighbors_fitness.append((self.fitness_function(n[0], n[1]), n))
@@ -55,3 +57,12 @@ class OptimizeSimulation:
             n for n in neighbors if OptimizeSimulation.valid_point(n[0], n[1])
         ]
         return res_neighbors
+    
+    def single_point_neighbors(self, s:int, S:int, neighbor_count:int = 4) -> list[tuple[int, int]]:
+        neighbors:set[tuple[int,int]] = set()
+        while len(neighbors) < neighbor_count:
+            value = rnd.randint(min(1, s), max(0,s))
+            neighbors.add((s-value, S))
+            value = rnd.randint(min(1, S - s), max(0, S - s))
+            neighbors.add(((s+value), S))
+        return list(neighbors)

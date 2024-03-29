@@ -20,7 +20,7 @@ class InventorySimulation:
         holding_pay_time: int = 60,
         product_value: int = 10,
         client_arrival_dist: Callable[[], int] = lambda: poisson_random_variable(5),
-        client_demand_dist: Callable[[], int] = lambda: random.randint(1, 10),
+        client_demand_dist: Callable[[], int] = lambda: random.randint(1, 50),
         sim_duration: int = 840,  # 14 hours -> 14 * 60min = 840min
     ):
         if s >= S:
