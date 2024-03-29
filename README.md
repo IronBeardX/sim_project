@@ -40,4 +40,7 @@ El costo de pedir y unidades del producto es una función especificada c(y), y t
 Supongamos además que siempre que un cliente demanda más del producto de lo que está disponible actualmente, entonces se vende la cantidad a mano y el resto del pedido se pierde para la tienda.
 
 # Solución
+
+El reporte de la simulación se encuentra en la carpeta "docs"
+
 ---
