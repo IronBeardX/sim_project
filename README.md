@@ -41,6 +41,7 @@ Supongamos además que siempre que un cliente demanda más del producto de lo qu
 
 # Solución
 
-El reporte de la simulación se encuentra en la carpeta "docs"
+- El reporte de la simulación se encuentra en la carpeta "docs"
+- El código donde se muestran los resultados está en el notebook "results" de la carpeta "clean_code".
 
 ---
