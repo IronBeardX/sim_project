@@ -13,14 +13,14 @@ class InventorySimulation:
         s: int = 10,
         S: int = 20,
         initial_inventory_level: int = 0,
-        ordering_cost_function: Callable[[int], int] = lambda x: x * 10,
+        ordering_cost_function: Callable[[int], int] = lambda x: x * 5,
         lead_time: int = 10,
         holding_cost_rate: int = 3,  # The pay constant for holding inventory
         # 60 minutes, 1 hour. After that time the store must pay for the inventory
         holding_pay_time: int = 60,
         product_value: int = 10,
         client_arrival_dist: Callable[[], int] = lambda: poisson_random_variable(5),
-        client_demand_dist: Callable[[], int] = lambda: random.randint(1, 10),
+        client_demand_dist: Callable[[], int] = lambda: random.randint(1, 50),
         sim_duration: int = 840,  # 14 hours -> 14 * 60min = 840min
     ):
         if s >= S:
@@ -128,7 +128,7 @@ class InventorySimulation:
         cost = self.ordering_cost_func(amount)
         self.actual_balance -= cost
         self.pending_order = False
-        self.registry.add_buy_record(self.time, amount)
+        self.registry.add_buy_record(self.time, amount, cost)
 
     def process_pay_holding_event(self, event: PayHoldingEvent):
         """Process the event of paying the service for holding inventory"""

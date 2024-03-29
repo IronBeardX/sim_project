@@ -110,7 +110,10 @@ Para implementar esta simulación seleccionamos el lenguaje Python debido al eco
     \item Desarrollamos la clase \textbf{Statistics} que se encarga de tomar los resultados guardados en los registros de una corrida de la simulación y los procesa para sacar estadísticas que muestran de forma general informaciones sobre las ventas de productos, compras al proveedor, variaciones del inventario y también información sobre el balance de la cuenta de la tienda.
 \end{itemize}
 
-Todo lo anterior es lo que creamos para analizar el comportamiento de nuestro modelo del sistema del Inventario y sacar informaciones estadísticas del mismo. Pero además de esto nosotros también creamos una clase que se encarga de optimizar los resultados de algunas estadísticas modificando algunos parámetros de la simulación. Esta clase se llama \textbf{Optimizer} usa Algoritmos genéticos
+Todo lo anterior es lo que creamos para analizar el comportamiento de nuestro modelo del sistema del Inventario
+y sacar informaciones estadísticas del mismo. Pero además de esto nosotros también creamos una clase que se encarga
+de optimizar los resultados de algunas de las estadísticas mas importantes de la simulación. Esto lo hace modificando
+los parámetros de la política (s,S) de la simulación. Esta clase se llama \textbf{Optimizer} y usa el algoritmo de Hill Climbing
 para llevar a cabo la optimización.
 
 \section{Modelo Matemático}
