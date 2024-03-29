@@ -1,10 +1,9 @@
 # This file will contain a class for optimizing locally the parameters of the policy (s,S). Will use Hill Climbing
 
 from simulation_engine import *
-from sim_stats import SimStatistics
+from sim_stats import SimStatistics, StatisticsResults
 import numpy as np
 import random as rnd
-from scipy.optimize import minimize
 
 
 class OptimizeSimulation:
@@ -25,24 +24,35 @@ class OptimizeSimulation:
     def valid_point(self, s: int, S: int):
         return 0 <= s <= S <= self.max_value
 
-    def fitness_function(self, s: int, S: int):
+    def fitness_function(
+        self,
+        s: int,
+        S: int,
+        fitness: Callable[[StatisticsResults], float],
+    ):
         """Returns the average fitness of several runs of the simulation"""
         self.simulation.s, self.simulation.S = s, S
         stats = SimStatistics(self.simulation)
         res = stats.calculate_statistics_results()
-        return (
-            res.loss_expectation
-            + 2 * res.costs_expectation
-            - 3 * res.final_balance_expectation
-        )
+        # return (
+        #     res.loss_expectation
+        #     + 2 * res.costs_expectation
+        #     - 3 * res.final_balance_expectation
+        # )
+        return fitness(res)
 
     def optimize(
         self,
+        fitness: Callable[
+            [StatisticsResults], float
+        ] = lambda stats: stats.loss_expectation
+        + 2 * stats.costs_expectation
+        - 3 * stats.final_balance_expectation,
         steps_search: int = 5,
         single_point: bool = False,
     ):
         policy = self.initial_policy
-        actual_best = self.fitness_function(policy[0], policy[1])
+        actual_best = self.fitness_function(policy[0], policy[1], fitness)
         path = [policy]
         visited_points: set[(int, int)] = set()
         visited_points.add(policy)
@@ -58,7 +68,7 @@ class OptimizeSimulation:
             for n in neighbors:
                 if n in visited_points:
                     continue
-                neighbors_fitness.append((self.fitness_function(n[0], n[1]), n))
+                neighbors_fitness.append((self.fitness_function(n[0], n[1], fitness), n))
                 visited_points.add(n)
             if len(neighbors_fitness) == 0:
                 break
