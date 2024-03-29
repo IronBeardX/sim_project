@@ -27,13 +27,6 @@ class OptimizeSimulation:
 
     def fitness_function(self, s: int, S: int):
         """Returns the average fitness of several runs of the simulation"""
-        # results = []
-        # for _ in range(self.runs):
-        #     self.simulation.run_with(s, S)
-        #     stats = SimStatistics(self.simulation)
-        #     cost = stats.give_fitness()
-        #     results.append(cost)
-        # return np.mean(results)
         self.simulation.s, self.simulation.S = s, S
         stats = SimStatistics(self.simulation)
         res = stats.calculate_statistics_results()
