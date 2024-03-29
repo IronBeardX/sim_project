@@ -2,20 +2,85 @@
 import matplotlib.pyplot as plt
 import numpy as np
 from typing import Callable
+from statistics import variance, mean
 
 from registers import *
+from simulation_engine import InventorySimulation
+
+
+class StatisticsResults:
+    def __init__(
+        self,
+        loss_expectation: float,
+        costs_expectation: float,
+        final_balance_expectation: float,
+        loss_variance: float,
+        costs_variance: float,
+        final_balance_variance: float,
+    ) -> None:
+        self.loss_expectation: float = loss_expectation
+        self.costs_expectation: float = costs_expectation
+        self.final_balance_expectation: float = final_balance_expectation
+        self.loss_variance: float = loss_variance
+        self.costs_variance: float = costs_variance
+        self.final_balance_variance: float = final_balance_variance
+
+
+def calculate_sell_loss(sells: list[SellRecord]):
+    demand = 0
+    sold = 0
+    for sell in sells:
+        demand += sell.amount_asked
+        sold += sell.amount_seeled
+    return demand - sold
 
 
 class SimStatistics:
     """This class extracts statistics from a simulation"""
-    def __init__(self, registry: Registry) -> None:
-        self.flat_registry: FlattenRegistry = FlattenRegistry(registry)
+
+    def __init__(self, simulation: InventorySimulation) -> None:
+        self.simulation: InventorySimulation = simulation
+        self.flat_registry: FlattenRegistry = FlattenRegistry(simulation)
+
+    def calculate_statistics_results(self, number_of_runs: int = 40):
+        balance = []
+        costs = []
+        loss = []
+        for _ in range(number_of_runs):
+            self.simulation.run()
+            sim = self.simulation
+            self.flat_registry = FlattenRegistry(sim)
+            sim_loss: tuple[list[int], list[float]] = self.get_sells_data(
+                lambda sells: sim.product_value * calculate_sell_loss(sells)
+            )
+            sim_balance: float = sim.actual_balance
+            sim_inventory_costs: tuple[list[int], list[float]] = self.get_pay_hold_data(
+                lambda pay_record: pay_record.cost
+            )
+            sim_supply_costs: tuple[list[int], list[float]] = self.get_buy_data(
+                lambda buy_record: buy_record.cost
+            )
+
+            loss.append(sum(sim_loss[1]))
+            balance.append(sim_balance)
+            costs.append(sum(sim_inventory_costs[1]) + sum(sim_supply_costs[1]))
+        results = StatisticsResults(
+            loss_expectation=mean(loss),
+            costs_expectation=mean(costs),
+            final_balance_expectation=mean(balance),
+            loss_variance=variance(loss),
+            costs_variance=variance(costs),
+            final_balance_variance=variance(balance),
+        )
+        return results
 
     def give_fitness(self):
         """Fitness useful for optimization"""
         sells: list[tuple[int, list[SellRecord]]] = self.flat_registry.flat_sells
-        hold_costs: list[tuple[int, PayHoldingRecord]] = self.flat_registry.flat_pay_holding
-        buy_costs:list[tuple[int, BuyRecord]] = self.flat_registry.flat_buy
+        hold_costs: list[tuple[int, PayHoldingRecord]] = (
+            self.flat_registry.flat_pay_holding
+        )
+        buy_costs: list[tuple[int, BuyRecord]] = self.flat_registry.flat_buy
 
         total_loss = 0
         for _, sell in sells:
@@ -23,16 +88,18 @@ class SimStatistics:
             total_loss += loss
         total_hold_cost = sum(map(lambda t: t[1].cost, hold_costs))
         total_buy_cost = sum(map(lambda t: t[1].amount, buy_costs))
-        return 3*total_loss + total_buy_cost + 2*total_hold_cost
-    
-    def get_sells_data(self, process_function:Callable[[list[SellRecord]], float]) -> tuple[list[int], list[float]]:
+        return 3 * total_loss + total_buy_cost + 2 * total_hold_cost
+
+    def get_sells_data(
+        self, process_function: Callable[[list[SellRecord]], float]
+    ) -> tuple[list[int], list[float]]:
         """This function returns a tuple of 2 lists.
         The first list is a list of integers representing the time.
         The second list is a list of floats representing some processed value of the sells at that time.
         The 'process function' is a function that receives a list of SellsRecords and return some float representing statistic information of that list of sales
         """
         return SimStatistics.get_data(self.flat_registry.flat_sells, process_function)
-    
+
     def get_buy_data(self, process_function: Callable[[BuyRecord], float]):
         """This function returns a tuple of 2 lists.
         The first list is a list of integers representing the time.
@@ -40,7 +107,7 @@ class SimStatistics:
         The 'process function' is a function that receives a single BuyRecord and return some float representing statistic information about it
         """
         return SimStatistics.get_data(self.flat_registry.flat_buy, process_function)
-    
+
     def get_stock_data(self, process_function: Callable[[StockRecord], float]):
         """This function returns a tuple of 2 lists.
         The first list is a list of integers representing the time.
@@ -48,7 +115,7 @@ class SimStatistics:
         The 'process function' is a function that receives a single StockRecord and return some float representing statistic information about it
         """
         return SimStatistics.get_data(self.flat_registry.flat_stock, process_function)
-    
+
     def get_balance_data(self, process_function: Callable[[BalanceRecord], float]):
         """This function returns a tuple of 2 lists.
         The first list is a list of integers representing the time.
@@ -56,30 +123,35 @@ class SimStatistics:
         The 'process function' is a function that receives a single BalanceRecord and return some float representing statistic information about it
         """
         return SimStatistics.get_data(self.flat_registry.flat_balance, process_function)
-    
+
     def get_pay_hold_data(self, process_function: Callable[[PayHoldingRecord], float]):
         """This function returns a tuple of 2 lists.
         The first list is a list of integers representing the time.
         The second list is a list of floats representing some processed value of the PayHoldingRecord at that time.
         The 'process function' is a function that receives a single PayHoldingRecord and return some float representing statistic information about it
         """
-        return SimStatistics.get_data(self.flat_registry.flat_pay_holding, process_function)
+        return SimStatistics.get_data(
+            self.flat_registry.flat_pay_holding, process_function
+        )
 
     @staticmethod
-    def get_data[T](raw_data:list[tuple[int,T]], process_function:Callable[[T], float]) -> tuple[list[int], list[float]]:
+    def get_data[
+        T
+    ](raw_data: list[tuple[int, T]], process_function: Callable[[T], float]) -> tuple[
+        list[int], list[float]
+    ]:
         """This function returns a tuple of 2 lists.
         The first list is a list of integers representing the time.
         The second list is a list of floats representing some processed value of the elements of data in the raw_data input.
         The 'process_function' is a function that receives some value and computes some float representing statistic information about the value
         """
-        time:list[int] = []
+        time: list[int] = []
         values: list[float] = []
-        
+
         for t, val in raw_data:
             time.append(t)
             values.append(process_function(val))
         return time, values
-
 
     # Plot the sells of the store along the time where it shows how much was asked and how much was seeled
     def plot_sells(self) -> None:
@@ -97,10 +169,10 @@ class SimStatistics:
             plot_data1.append((time, demand))
             plot_data2.append((time, sold))
 
-        plt.plot(*zip(*plot_data1), label='Demand', color='b')
-        plt.plot(*zip(*plot_data2), label='sold', color='g')
-        plt.xlabel('Time')
-        plt.ylabel('Amount')
+        plt.plot(*zip(*plot_data1), label="Demand", color="b")
+        plt.plot(*zip(*plot_data2), label="sold", color="g")
+        plt.xlabel("Time")
+        plt.ylabel("Amount")
         # plt.title('Sales vs Demand of the Store')
         plt.legend()
 
@@ -109,9 +181,9 @@ class SimStatistics:
         plot_data = []
         for time, stock_record in stock:
             plot_data.append((time, stock_record.amount))
-        plt.plot(*zip(*plot_data), label='Stock', color='b')
-        plt.xlabel('Time')
-        plt.ylabel('Amount')
+        plt.plot(*zip(*plot_data), label="Stock", color="b")
+        plt.xlabel("Time")
+        plt.ylabel("Amount")
         # plt.title('Stock of the store')
         plt.legend()
 
@@ -127,20 +199,22 @@ class SimStatistics:
                 sold += sell.amount_seeled
             plot_data.append((time, demand - sold))
 
-        plt.plot(*zip(*plot_data), label='Loss', color='r')
-        plt.xlabel('Time')
-        plt.ylabel('Amount')
+        plt.plot(*zip(*plot_data), label="Loss", color="r")
+        plt.xlabel("Time")
+        plt.ylabel("Amount")
         # plt.title('Loss of the store')
         plt.legend()
 
     def plot_holding_costs(self) -> None:
-        pay_holding: list[tuple[int, PayHoldingRecord]] = self.flat_registry.flat_pay_holding
+        pay_holding: list[tuple[int, PayHoldingRecord]] = (
+            self.flat_registry.flat_pay_holding
+        )
         plot_data = []
         for time, pay_holding_record in pay_holding:
             plot_data.append((time, pay_holding_record.cost))
-        plt.plot(*zip(*plot_data), label='Holding Cost', color='r')
-        plt.xlabel('Time')
-        plt.ylabel('Amount')
+        plt.plot(*zip(*plot_data), label="Holding Cost", color="r")
+        plt.xlabel("Time")
+        plt.ylabel("Amount")
         # plt.title('Holding Cost of the store')
         plt.legend()
 
@@ -149,9 +223,9 @@ class SimStatistics:
         plot_data = []
         for time, buy_record in buy:
             plot_data.append((time, buy_record.amount))
-        plt.plot(*zip(*plot_data), label='Buy', color='g')
-        plt.xlabel('Time')
-        plt.ylabel('Amount')
+        plt.plot(*zip(*plot_data), label="Buy", color="g")
+        plt.xlabel("Time")
+        plt.ylabel("Amount")
         # plt.title('Buy of the store')
         plt.legend()
 
@@ -163,11 +237,11 @@ class SimStatistics:
             for sell in sell_list:
                 amount_asked += sell.amount_asked
                 amount_seeled += sell.amount_seeled
-            plt.bar(time, amount_asked, color='r')
-            plt.bar(time, amount_seeled, color='b')
-        plt.xlabel('Time')
-        plt.ylabel('Amount')
-        plt.title('Sales of the store')
+            plt.bar(time, amount_asked, color="r")
+            plt.bar(time, amount_seeled, color="b")
+        plt.xlabel("Time")
+        plt.ylabel("Amount")
+        plt.title("Sales of the store")
         plt.show()
 
     def plot_balance(self) -> None:
@@ -179,10 +253,10 @@ class SimStatistics:
         # Dividing data in two parts, ones with positive balance and other with negative balance
         positive_data = [(time, balance) for time, balance in plot_data if balance > 0]
         negative_data = [(time, -balance) for time, balance in plot_data if balance < 0]
-        plt.plot(*zip(*positive_data), label='Positive Balance', color='g')
-        plt.plot(*zip(*negative_data), label='Negative Balance', color='r')
-        plt.xlabel('Time')
-        plt.ylabel('Amount')
+        plt.plot(*zip(*positive_data), label="Positive Balance", color="g")
+        plt.plot(*zip(*negative_data), label="Negative Balance", color="r")
+        plt.xlabel("Time")
+        plt.ylabel("Amount")
         # plt.title('Balance of the store')
         plt.legend()
 
@@ -193,8 +267,12 @@ class FlattenRegistry:
         self.flat_sells: list[tuple[int, list[SellRecord]]] = self.flat_sells_registry()
         self.flat_stock: list[tuple[int, StockRecord]] = self.flat_stock_registry()
         self.flat_buy: list[tuple[int, BuyRecord]] = self.flat_buy_registry()
-        self.flat_balance: list[tuple[int, BalanceRecord]] = self.flat_balance_registry()
-        self.flat_pay_holding: list[tuple[int, PayHoldingRecord]] = self.flat_pay_holding_registry()
+        self.flat_balance: list[tuple[int, BalanceRecord]] = (
+            self.flat_balance_registry()
+        )
+        self.flat_pay_holding: list[tuple[int, PayHoldingRecord]] = (
+            self.flat_pay_holding_registry()
+        )
 
     def flat_sells_registry(self) -> list[tuple[int, list[SellRecord]]]:
         """Returns a sorted list of tuples where the first element is the time in which a sell
@@ -215,8 +293,7 @@ class FlattenRegistry:
     def flat_buy_registry(self) -> list[tuple[int, BuyRecord]]:
         """Returns a sorted list of tuples where the first element is the time and the second one
         is the BuyRecord"""
-        buy: list[tuple[int, BuyRecord]] = sorted(
-            self.registry.buy_registry.items())
+        buy: list[tuple[int, BuyRecord]] = sorted(self.registry.buy_registry.items())
         return buy
 
     def flat_balance_registry(self) -> list[tuple[int, BalanceRecord]]:

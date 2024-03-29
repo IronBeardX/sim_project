@@ -8,27 +8,36 @@ from scipy.optimize import minimize
 
 
 class OptimizeSimulation:
-    def __init__(self, simulation: InventorySimulation, runs: int) -> None:
-        self.simulation = simulation
-        self.runs = runs
+    def __init__(
+        self,
+        simulation: InventorySimulation,
+        initial_policy: tuple[int, int],
+        runs: int,
+        max_value: int,
+    ) -> None:
+        self.simulation: InventorySimulation = simulation
+        self.initial_policy = initial_policy
+        self.runs: int = runs
+        if max_value < initial_policy[1]:
+            raise Exception("The max_value variable must be greater than S")
+        self.max_value: int = max_value
 
-    @staticmethod
-    def valid_point(s: int, S: int):
-        return s >= 0 and s <= S
+    def valid_point(self, s: int, S: int):
+        return 0 <= s <= S <= self.max_value
 
     def fitness_function(self, s: int, S: int):
         """Returns the average fitness of several runs of the simulation"""
         results = []
         for _ in range(self.runs):
             self.simulation.run_with(s, S)
-            stats = SimStatistics(self.simulation.registry)
+            stats = SimStatistics(self.simulation)
             cost = stats.give_fitness()
             results.append(cost)
         return np.mean(results)
 
     def optimize(self, steps_search: int = 5, single_point: bool = False):
         sim = self.simulation
-        policy = (sim.s, sim.S)
+        policy = self.initial_policy
         actual_best = self.fitness_function(policy[0], policy[1])
         path = [policy]
         visited_points: set[(int, int)] = set()
@@ -64,7 +73,7 @@ class OptimizeSimulation:
             (s + value, S - value),
         ]
         res_neighbors = [
-            n for n in neighbors if OptimizeSimulation.valid_point(n[0], n[1])
+            n for n in neighbors if self.valid_point(n[0], n[1])
         ]
         return res_neighbors
 
@@ -75,8 +84,8 @@ class OptimizeSimulation:
         step_size = 30
         while len(neighbors) < neighbor_count:
             interpolator = rnd.random()
-            value = int(min(step_size * interpolator, s))
+            value = int(min(step_size, s) * interpolator)
             neighbors.add((s - value, S))
-            value = int(min(step_size * interpolator, S - s))
+            value = int(min(step_size, S - s) * interpolator)
             neighbors.add(((s + value), S))
         return list(neighbors)
