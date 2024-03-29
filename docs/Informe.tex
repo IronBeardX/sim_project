@@ -176,7 +176,6 @@ Las variables con las que contamos en la simulación se pueden dividir en las si
         \item Se actualiza el tiempo $t$ de la simulación al tiempo del evento \textbf{E}.
         \item En dependencia del tipo de evento que represente \textbf{E} se cae en uno de 3 posibles casos. Estos se analizan más adelante en el documento.
         \item Al finalizar de procesar el evento se verifica el nivel del inventario y si cumple con la política $(s,S)$ y además se tiene que no hay un pedido pendiente, es decir, que la variable \textbf{pending\_order} es \textbf{false}, se genera un evento \textbf{SupplyArrival} con tiempo $t_a = t + L$, (donde $L$ es el tiempo que se demora en llegar el envío del proveedor) y con la cantidad $S$ - \textbf{actual\_inventory}. Luego se agrega este evento a la cola de eventos y se actualiza la variable \textbf{pending\_order} a \textbf{true}.
-        \item Luego se genera con la distribución Poisson un nuevo $t_c$ que es el tiempo que se demorará en aparecer el próximo cliente. Se genera con la distribución $G$ un nuevo valor para \textbf{amount}, es decir, cuantas unidades ordenará este próximo cliente. Se crea un nuevo evento \textbf{Sell} con los valores $t + t_c$ para el tiempo y \textbf{amount} para la cantidad de unidades que pedirá. Luego se agrega a la cola de eventos.
         \item Se actualiza el registro \textbf{BalanceRegistry} guardando los valores $t$ en la variable \textbf{time} y el \textbf{actual\_balance} en la variable \textbf{balance}.
         \item Se actualiza el registro \textbf{StockRegistry} guardando el tiempo actual de la simulación, dado por la variable $t$ y la cantidad de unidades del producto en el almacén, dado por la variable \textbf{actual\_inventory}.
     \end{itemize}
@@ -187,6 +186,7 @@ Las variables con las que contamos en la simulación se pueden dividir en las si
         \item Se actualiza la variable \textbf{actual\_balance} a \textbf{actual\_balance}+= \textbf{p} $\cdot$ \textbf{sell\_amount} $\cdot$ \textbf{amount}, donde \textbf{p} es el precio del producto.
         \item Se actualiza la variable \textbf{actual\_inventory} a \textbf{actual\_inventory - sell\_amount}.
         \item Se actualiza el registro \textbf{SellRegistry} guardando el tiempo actual de la simulación, dado por la variable $t$, la cantidad pedida, dada por \textbf{amount} y la cantidad que el almacén pudo vender, dado por \textbf{sell\_amount}.
+        \item Para finalizar, se genera con la distribución Poisson un nuevo $t_c$ que es el tiempo que se demorará en aparecer el próximo cliente. Se genera con la distribución $G$ un nuevo valor para \textbf{amount}, es decir, cuantas unidades ordenará este próximo cliente. Se crea un nuevo evento \textbf{Sell} con los valores $t + t_c$ para el tiempo y \textbf{amount} para la cantidad de unidades que pedirá. Luego se agrega a la cola de eventos.
     \end{itemize}
     \item \textbf{Caso 2 - El evento E es de tipo SupplyArrival}
     \begin{itemize}
