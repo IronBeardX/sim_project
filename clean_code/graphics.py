@@ -53,7 +53,7 @@ class Graphics:
     def plot_supply_costs(self):
         stats = self.sim_stats
         supply_costs = stats.get_buy_data(lambda buy_record: buy_record.cost)
-        plt.plot(supply_costs[0], supply_costs[1], label="holding costs")
+        plt.plot(supply_costs[0], supply_costs[1], label="supply costs")
         plt.xlabel("Time")
         plt.ylabel("Money spent in supply payment")
         plt.legend()

@@ -27,13 +27,17 @@ class OptimizeSimulation:
 
     def fitness_function(self, s: int, S: int):
         """Returns the average fitness of several runs of the simulation"""
-        results = []
-        for _ in range(self.runs):
-            self.simulation.run_with(s, S)
-            stats = SimStatistics(self.simulation)
-            cost = stats.give_fitness()
-            results.append(cost)
-        return np.mean(results)
+        # results = []
+        # for _ in range(self.runs):
+        #     self.simulation.run_with(s, S)
+        #     stats = SimStatistics(self.simulation)
+        #     cost = stats.give_fitness()
+        #     results.append(cost)
+        # return np.mean(results)
+        self.simulation.s, self.simulation.S = s, S
+        stats = SimStatistics(self.simulation)
+        res = stats.calculate_statistics_results()
+        return res.loss_expectation + res.costs_expectation
 
     def optimize(self, steps_search: int = 5, single_point: bool = False):
         sim = self.simulation
@@ -58,8 +62,8 @@ class OptimizeSimulation:
                 visited_points.add(n)
             if len(neighbors_fitness) == 0:
                 break
-            best = max(neighbors_fitness, key=lambda x: x[0])
-            if best[0] >= actual_best:
+            best = min(neighbors_fitness, key=lambda x: x[0])
+            if best[0] <= actual_best:
                 actual_best = best[0]
                 path.append(best[1])
         return path[-1]
@@ -72,9 +76,7 @@ class OptimizeSimulation:
             (s - value, S + value),
             (s + value, S - value),
         ]
-        res_neighbors = [
-            n for n in neighbors if self.valid_point(n[0], n[1])
-        ]
+        res_neighbors = [n for n in neighbors if self.valid_point(n[0], n[1])]
         return res_neighbors
 
     def single_point_neighbors(

@@ -40,7 +40,7 @@ class SimStatistics:
 
     def __init__(self, simulation: InventorySimulation) -> None:
         self.simulation: InventorySimulation = simulation
-        self.flat_registry: FlattenRegistry = FlattenRegistry(simulation)
+        self.flat_registry: FlattenRegistry = FlattenRegistry(simulation.registry)
 
     def calculate_statistics_results(self, number_of_runs: int = 40):
         balance = []
@@ -49,7 +49,7 @@ class SimStatistics:
         for _ in range(number_of_runs):
             self.simulation.run()
             sim = self.simulation
-            self.flat_registry = FlattenRegistry(sim)
+            self.flat_registry = FlattenRegistry(sim.registry)
             sim_loss: tuple[list[int], list[float]] = self.get_sells_data(
                 lambda sells: sim.product_value * calculate_sell_loss(sells)
             )
@@ -152,114 +152,6 @@ class SimStatistics:
             time.append(t)
             values.append(process_function(val))
         return time, values
-
-    # Plot the sells of the store along the time where it shows how much was asked and how much was seeled
-    def plot_sells(self) -> None:
-        sells: list[tuple[int, list[SellRecord]]] = self.flat_registry.flat_sells
-        plot_data1 = []
-        plot_data2 = []
-
-        for time, sell_list in sells:
-            demand = 0
-            sold = 0
-            print(len(sell_list))
-            for sell in sell_list:
-                demand += sell.amount_asked
-                sold += sell.amount_seeled
-            plot_data1.append((time, demand))
-            plot_data2.append((time, sold))
-
-        plt.plot(*zip(*plot_data1), label="Demand", color="b")
-        plt.plot(*zip(*plot_data2), label="sold", color="g")
-        plt.xlabel("Time")
-        plt.ylabel("Amount")
-        # plt.title('Sales vs Demand of the Store')
-        plt.legend()
-
-    def plot_stock(self) -> None:
-        stock: list[tuple[int, StockRecord]] = self.flat_registry.flat_stock
-        plot_data = []
-        for time, stock_record in stock:
-            plot_data.append((time, stock_record.amount))
-        plt.plot(*zip(*plot_data), label="Stock", color="b")
-        plt.xlabel("Time")
-        plt.ylabel("Amount")
-        # plt.title('Stock of the store')
-        plt.legend()
-
-    def plot_loss(self) -> None:
-        sells: list[tuple[int, list[SellRecord]]] = self.flat_registry.flat_sells
-        plot_data = []
-
-        for time, sell_list in sells:
-            demand = 0
-            sold = 0
-            for sell in sell_list:
-                demand += sell.amount_asked
-                sold += sell.amount_seeled
-            plot_data.append((time, demand - sold))
-
-        plt.plot(*zip(*plot_data), label="Loss", color="r")
-        plt.xlabel("Time")
-        plt.ylabel("Amount")
-        # plt.title('Loss of the store')
-        plt.legend()
-
-    def plot_holding_costs(self) -> None:
-        pay_holding: list[tuple[int, PayHoldingRecord]] = (
-            self.flat_registry.flat_pay_holding
-        )
-        plot_data = []
-        for time, pay_holding_record in pay_holding:
-            plot_data.append((time, pay_holding_record.cost))
-        plt.plot(*zip(*plot_data), label="Holding Cost", color="r")
-        plt.xlabel("Time")
-        plt.ylabel("Amount")
-        # plt.title('Holding Cost of the store')
-        plt.legend()
-
-    def plot_buy(self) -> None:
-        buy: list[tuple[int, BuyRecord]] = self.flat_registry.flat_buy
-        plot_data = []
-        for time, buy_record in buy:
-            plot_data.append((time, buy_record.amount))
-        plt.plot(*zip(*plot_data), label="Buy", color="g")
-        plt.xlabel("Time")
-        plt.ylabel("Amount")
-        # plt.title('Buy of the store')
-        plt.legend()
-
-    def plot_bar_sell(self) -> None:
-        sells: list[tuple[int, list[SellRecord]]] = self.flat_registry.flat_sells
-        for time, sell_list in sells:
-            amount_asked = 0
-            amount_seeled = 0
-            for sell in sell_list:
-                amount_asked += sell.amount_asked
-                amount_seeled += sell.amount_seeled
-            plt.bar(time, amount_asked, color="r")
-            plt.bar(time, amount_seeled, color="b")
-        plt.xlabel("Time")
-        plt.ylabel("Amount")
-        plt.title("Sales of the store")
-        plt.show()
-
-    def plot_balance(self) -> None:
-        balance: list[tuple[int, BalanceRecord]] = self.flat_registry.flat_balance
-        plot_data = []
-        for time, balance_record in balance:
-            plot_data.append((time, balance_record.balance))
-        # plt.plot(*zip(*plot_data), label='Balance', color='b')
-        # Dividing data in two parts, ones with positive balance and other with negative balance
-        positive_data = [(time, balance) for time, balance in plot_data if balance > 0]
-        negative_data = [(time, -balance) for time, balance in plot_data if balance < 0]
-        plt.plot(*zip(*positive_data), label="Positive Balance", color="g")
-        plt.plot(*zip(*negative_data), label="Negative Balance", color="r")
-        plt.xlabel("Time")
-        plt.ylabel("Amount")
-        # plt.title('Balance of the store')
-        plt.legend()
-
 
 class FlattenRegistry:
     def __init__(self, registry: Registry) -> None:

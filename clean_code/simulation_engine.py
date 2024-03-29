@@ -13,7 +13,7 @@ class InventorySimulation:
         s: int = 10,
         S: int = 20,
         initial_inventory_level: int = 0,
-        ordering_cost_function: Callable[[int], int] = lambda x: x * 10,
+        ordering_cost_function: Callable[[int], int] = lambda x: x * 5,
         lead_time: int = 10,
         holding_cost_rate: int = 3,  # The pay constant for holding inventory
         # 60 minutes, 1 hour. After that time the store must pay for the inventory
