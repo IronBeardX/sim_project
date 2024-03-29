@@ -128,7 +128,7 @@ class InventorySimulation:
         cost = self.ordering_cost_func(amount)
         self.actual_balance -= cost
         self.pending_order = False
-        self.registry.add_buy_record(self.time, amount)
+        self.registry.add_buy_record(self.time, amount, cost)
 
     def process_pay_holding_event(self, event: PayHoldingEvent):
         """Process the event of paying the service for holding inventory"""

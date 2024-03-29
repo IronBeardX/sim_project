@@ -28,9 +28,9 @@ class Registry:
         else:
             self.stock_registry[time] = StockRecord(time, amount)
 
-    def add_buy_record(self, time: int, amount: int):
+    def add_buy_record(self, time: int, amount: int, cost:int):
         """Create a BuyRecord and stores it in the buy_registry"""
-        record = BuyRecord(time, amount)
+        record = BuyRecord(time, amount, cost)
         self.buy_registry[time] = record
 
     def add_balance_record(self, time: int, balance: int):
@@ -81,10 +81,12 @@ class StockRecord(Record):
 class BuyRecord(Record):
     """This record store the information of the number of units bought to the provider at a point in time"""
 
-    def __init__(self, time: int, amount: int) -> None:
+    def __init__(self, time: int, amount: int, cost:int) -> None:
         super().__init__(time)
         self.amount: int = amount
         """The number of units that the store just bought to the provider"""
+        self.cost: int = cost
+        """How much the store pay for this supply"""
 
     def __str__(self) -> str:
         return f"BuyRecord (time = {self.time}, number of units received = {self.amount})"

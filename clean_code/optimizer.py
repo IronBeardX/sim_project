@@ -6,6 +6,7 @@ import numpy as np
 import random as rnd
 from scipy.optimize import minimize
 
+
 class OptimizeSimulation:
     def __init__(self, simulation: InventorySimulation, runs: int) -> None:
         self.simulation = simulation
@@ -25,18 +26,22 @@ class OptimizeSimulation:
             results.append(cost)
         return np.mean(results)
 
-    def optimize(self, steps_search:int = 5, single_point: bool = False):
+    def optimize(self, steps_search: int = 5, single_point: bool = False):
         sim = self.simulation
-        policy = (sim.s,sim.S)
+        policy = (sim.s, sim.S)
         actual_best = self.fitness_function(policy[0], policy[1])
         path = [policy]
-        visited_points:set[(int,int)] = set()
+        visited_points: set[(int, int)] = set()
         visited_points.add(policy)
-        
+
         for i in range(steps_search):
             neighbors_fitness = []
             point = path[-1][0], path[-1][1]
-            neighbors = self.single_point_neighbors(point[0],point[1]) if single_point else self.get_neighbors(point[0], point[1])
+            neighbors = (
+                self.single_point_neighbors(point[0], point[1])
+                if single_point
+                else self.get_neighbors(point[0], point[1])
+            )
             for n in neighbors:
                 if n in visited_points:
                     continue
@@ -51,18 +56,27 @@ class OptimizeSimulation:
         return path[-1]
 
     def get_neighbors(self, s: int, S: int) -> list[tuple[int, int]]:
-        value = rnd.randint(1,30)
-        neighbors = [(s + value, S + value), (s - value, S - value), (s - value, S + value), (s + value, S - value)]
+        value = rnd.randint(1, 30)
+        neighbors = [
+            (s + value, S + value),
+            (s - value, S - value),
+            (s - value, S + value),
+            (s + value, S - value),
+        ]
         res_neighbors = [
             n for n in neighbors if OptimizeSimulation.valid_point(n[0], n[1])
         ]
         return res_neighbors
-    
-    def single_point_neighbors(self, s:int, S:int, neighbor_count:int = 4) -> list[tuple[int, int]]:
-        neighbors:set[tuple[int,int]] = set()
+
+    def single_point_neighbors(
+        self, s: int, S: int, neighbor_count: int = 4
+    ) -> list[tuple[int, int]]:
+        neighbors: set[tuple[int, int]] = set()
+        step_size = 30
         while len(neighbors) < neighbor_count:
-            value = rnd.randint(min(1, s), max(0,s))
-            neighbors.add((s-value, S))
-            value = rnd.randint(min(1, S - s), max(0, S - s))
-            neighbors.add(((s+value), S))
+            interpolator = rnd.random()
+            value = int(min(step_size * interpolator, s))
+            neighbors.add((s - value, S))
+            value = int(min(step_size * interpolator, S - s))
+            neighbors.add(((s + value), S))
         return list(neighbors)

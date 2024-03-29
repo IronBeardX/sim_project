@@ -30,9 +30,27 @@ class Graphics:
     def plot_loss(self, product_price:float):
         stats = self.sim_stats
         loss = stats.get_sells_data(lambda sells: product_price * calculate_sell_loss(sells))
-        plt.plot(loss[0], loss[1], label = 'money loss')
+        plt.plot(loss[0], loss[1], label = 'money loss in sales')
         plt.xlabel('Time')
         plt.ylabel('Total money loss')
+        plt.legend()
+        plt.show()
+
+    def plot_inventory_holding_cost(self):
+        stats = self.sim_stats
+        costs = stats.get_pay_hold_data(lambda pay_record: pay_record.cost)
+        plt.plot(costs[0],costs[1], label = 'holding costs')
+        plt.xlabel('Time')
+        plt.ylabel('Total money spent')
+        plt.legend()
+        plt.show()
+
+    def plot_supply_costs(self):
+        stats = self.sim_stats
+        supply_costs = stats.get_buy_data(lambda buy_record: buy_record.cost)
+        plt.plot(supply_costs[0],supply_costs[1], label = 'holding costs')
+        plt.xlabel('Time')
+        plt.ylabel('Money spent in supply payment')
         plt.legend()
         plt.show()
 
