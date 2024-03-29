@@ -30,17 +30,24 @@ class OptimizeSimulation:
         self.simulation.s, self.simulation.S = s, S
         stats = SimStatistics(self.simulation)
         res = stats.calculate_statistics_results()
-        return res.loss_expectation + res.costs_expectation
+        return (
+            res.loss_expectation
+            + 2 * res.costs_expectation
+            - 3 * res.final_balance_expectation
+        )
 
-    def optimize(self, steps_search: int = 5, single_point: bool = False):
-        sim = self.simulation
+    def optimize(
+        self,
+        steps_search: int = 5,
+        single_point: bool = False,
+    ):
         policy = self.initial_policy
         actual_best = self.fitness_function(policy[0], policy[1])
         path = [policy]
         visited_points: set[(int, int)] = set()
         visited_points.add(policy)
 
-        for i in range(steps_search):
+        for _ in range(steps_search):
             neighbors_fitness = []
             point = path[-1][0], path[-1][1]
             neighbors = (
